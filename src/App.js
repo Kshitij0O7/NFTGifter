@@ -6,6 +6,8 @@ const App = () => {
 
   const [prompt, setPrompt] = useState("");
   const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [notsent, setNotSent] = useState(false);
 
   //console.log(prompt)
 
@@ -14,6 +16,8 @@ const App = () => {
 
 const generateArt = async () => {
 	try {
+		setLoading(true);
+		
 		const response = await axios.post(
 			`https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5`,
 			{
@@ -26,15 +30,16 @@ const generateArt = async () => {
 			{ responseType: "blob" }
 		);
 		// convert blob to a image file type
+		//setPrompt("");
 		const file = new File([response.data], "image.png", {
 			type: "image/png",
 		});
 		// saving the file in a state
 		setFile(file);
+		//setPrompt("");
 		const url = URL.createObjectURL(response.data);
-		// console.log(url)
-		console.log(url);
 		setImageBlob(url);
+		setLoading(false);
 	} catch (err) {
 		console.log(err);
 	}
@@ -59,7 +64,7 @@ const uploadArtToIpfs = async () => {
       description: "AI generated NFT",
       image: file
     })
-    console.log("done");
+    //console.log("done");
     return cleanupIPFS(store.data.image.href)
   } catch(err) {
     console.log(err)
@@ -68,6 +73,7 @@ const uploadArtToIpfs = async () => {
 
 const mintNft = async () => {
 	try {
+		setNotSent(true);
 		const imageURL = await uploadArtToIpfs();
 
 		// mint as an NFT on nftport
@@ -87,7 +93,10 @@ const mintNft = async () => {
       }
 		);
 		const data = await response.data;
-		console.log(data);
+		//console.log(data);
+		setNotSent(false);
+		window.location.reload();
+		setAddress("");
 	} catch (err) {
 		console.log(err);
 	}
@@ -106,7 +115,18 @@ return (
           type="text"
           placeholder="Enter a prompt"
         />
-        <button onClick={generateArt} className="bg-black text-white rounded-md p-2">Next</button>       
+		{loading ? (
+			<div>
+				<button disabled className="bg-black text-white rounded-md p-2">
+					Loading...
+				</button>
+			</div>
+		):(
+			<div>
+				<button onClick={generateArt} className="bg-black text-white rounded-md p-2">GENERATE</button> 
+			</div>
+		)}
+         
       </div>
       {imageBlob && (
 	<div className="flex flex-col gap-4 items-center justify-center">
@@ -117,12 +137,16 @@ return (
       type="text"
       placeholder="Enter an Address"
     />
-		<button
-			onClick={mintNft}
-			className="bg-black text-white rounded-md p-2"
-		>
-			SEND GIFT
+		{notsent ? (
+			<button disabled className="bg-black text-white rounded-md p-2">
+			SENDING...
 		</button>
+		):(
+			<button onClick={mintNft} className="bg-black text-white rounded-md p-2">
+				SEND GIFT
+			</button>
+		)}
+		
 	</div>
 )}
     </div>
