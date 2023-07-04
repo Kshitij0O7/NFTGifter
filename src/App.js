@@ -95,7 +95,7 @@ const mintNft = async () => {
 		const data = await response.data;
 		//console.log(data);
 		setNotSent(false);
-		window.location.reload();
+		//window.location.reload();
 		setAddress("");
 	} catch (err) {
 		console.log(err);
